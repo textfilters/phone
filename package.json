@@ -1,6 +1,6 @@
 {
   "name": "@textfilters/phone",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Phone-like sequence filtering for composable text moderation.",
   "license": "MIT",
