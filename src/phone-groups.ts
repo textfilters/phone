@@ -10,6 +10,13 @@ export const isValidPhoneGroups = (
   if (digitsCount < 10 || digitsCount > 15) return false;
   if (groups.length === 0) return false;
   if (groups.length === 1) return true;
+  const hasPlusSevenSingleDigitTail =
+    options.hasPlus &&
+    groups.length === 9 &&
+    groups[0] === "7" &&
+    groups[1]?.length === 3 &&
+    groups.slice(2).every((group) => group.length === 1);
+  if (hasPlusSevenSingleDigitTail) return true;
   if (
     groups.length > 6 &&
     !(

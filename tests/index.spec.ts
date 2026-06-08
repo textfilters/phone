@@ -5,7 +5,7 @@ import {
   filter,
   PHONE_FILTER_NAME,
   phoneFilter,
-} from "./index";
+} from "../src/index.js";
 
 const mask = (s: string, ch = "*") => ch.repeat(Array.from(s).length);
 
@@ -59,6 +59,9 @@ describe("textfilters phone package", () => {
   it("handles separators, zero-width and unicode normalization cases", () => {
     expect(filter.censor("+7-999-123-45-67")).toBe(mask("+7-999-123-45-67"));
     expect(filter.censor("+7.999.123.45.67")).toBe(mask("+7.999.123.45.67"));
+    expect(filter.censor("+7 999 1 2 3 4 5 6 7")).toBe(
+      mask("+7 999 1 2 3 4 5 6 7"),
+    );
 
     const input = "+7\u200B999\u200B123\u200B45\u200B67";
     expect(filter.censor(input)).toBe(mask(input));
