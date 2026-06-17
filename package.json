@@ -2,13 +2,21 @@
   "name": "@textfilters/phone",
   "version": "0.1.2",
   "type": "module",
-  "description": "Phone-like sequence filtering for composable text moderation.",
+  "description": "TypeScript phone number and phone-like sequence detector for moderation pipelines with false-positive guards.",
   "license": "MIT",
   "keywords": [
     "text-filtering",
+    "content-moderation",
     "moderation",
+    "typescript",
+    "javascript",
+    "censoring",
+    "redaction",
+    "phone-number-detection",
     "phone-filter",
-    "typescript"
+    "pii-redaction",
+    "contact-redaction",
+    "false-positive-guards"
   ],
   "sideEffects": false,
   "files": [
