@@ -1,6 +1,12 @@
 # @textfilters/phone
 
-Phone-like sequence filtering for composable text moderation.
+TypeScript phone number detection and phone-like sequence filtering for content
+moderation, chat moderation, UGC moderation, censoring, contact redaction, and
+PII redaction workflows.
+
+Use `@textfilters/phone` to detect phone numbers and phone-like numeric
+sequences while keeping false-positive guards around dates, times, coordinates,
+IP-like text, and balance-like numbers.
 
 ## Installation
 
@@ -15,6 +21,14 @@ Install with GitHub npm authentication configured. GitHub Packages requires auth
 ```sh
 npm install @textfilters/core @textfilters/phone
 ```
+
+## Use Cases
+
+- Redact phone numbers from chat messages, profiles, listings, and other UGC.
+- Add contact redaction to a broader TypeScript text filtering library.
+- Keep phone filtering separate from URL detection, email detection, profanity
+  filtering, and spam checks.
+- Apply false-positive guards for common numeric text that should stay visible.
 
 ## Usage
 
@@ -45,6 +59,17 @@ False-positive guards keep date-like, time-like, coordinate-like, IP/server-like
 
 See [docs/architecture.md](docs/architecture.md) for the parser flow, module map,
 and change guide.
+
+## Related Textfilters Packages
+
+- `@textfilters/core` for shared pipeline, normalization, and range masking
+  primitives.
+- `@textfilters/url` for URL detection, obfuscated links, and safe link
+  censoring.
+- `@textfilters/email` for email detection and contact redaction.
+- `@textfilters/profanity` for Russian profanity filtering and taxonomy-backed
+  moderation.
+- `@textfilters/spam` for actor-based anti-spam guard checks.
 
 ## Release
 
