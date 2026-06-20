@@ -39,7 +39,8 @@
     "lint": "prettier README.md docs package.json src tests --check",
     "format": "prettier README.md docs package.json src tests --write",
     "pack:dry-run": "npm pack --dry-run",
-    "check": "npm run lint && npm test && npm run build && npm run pack:dry-run"
+    "smoke:dist": "node --input-type=module --eval \"const phone = await import('./dist/index.js'); phone.createPhoneFilter().censor('+1 555 123 4567');\"",
+    "check": "npm run lint && npm test && npm run build && npm run smoke:dist && npm run pack:dry-run"
   },
   "dependencies": {
     "@textfilters/core": "^0.1.0"
