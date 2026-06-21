@@ -1,5 +1,5 @@
 import {
-  maskCodePointRanges,
+  maskCodePointRangesPreservingLength,
   normalizeMaskChar,
   type TextCensor,
 } from "@textfilters/core";
@@ -26,7 +26,11 @@ export function createPhoneFilter(config: PhoneFilterConfig = {}): PhoneFilter {
       if (!source) return source;
       const meta = createMeta(source);
       const ranges = collectRanges(meta);
-      return maskCodePointRanges(meta.codePoints, ranges, maskChar);
+      return maskCodePointRangesPreservingLength(
+        meta.codePoints,
+        ranges,
+        maskChar,
+      );
     },
   };
 }

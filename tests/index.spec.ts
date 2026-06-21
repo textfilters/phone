@@ -8,6 +8,7 @@ import {
 } from "../src/index.js";
 
 const mask = (s: string, ch = "*") => ch.repeat(Array.from(s).length);
+const maskLength = (s: string, ch = "*") => ch.repeat(s.length);
 
 describe("textfilters phone package", () => {
   it("exposes old-compatible public API", () => {
@@ -72,13 +73,13 @@ describe("textfilters phone package", () => {
       `call ${mask("٧٩٩٩١٢٣٤٥٦٧")} now`,
     );
     expect(filter.censor("call 𐒧𐒩𐒩𐒩𐒡𐒢𐒣𐒤𐒥𐒦𐒧 now")).toBe(
-      `call ${mask("𐒧𐒩𐒩𐒩𐒡𐒢𐒣𐒤𐒥𐒦𐒧")} now`,
+      `call ${maskLength("𐒧𐒩𐒩𐒩𐒡𐒢𐒣𐒤𐒥𐒦𐒧")} now`,
     );
     expect(filter.censor("call 𑽗𑽙𑽙𑽙𑽑𑽒𑽓𑽔𑽕𑽖𑽗 now")).toBe(
-      `call ${mask("𑽗𑽙𑽙𑽙𑽑𑽒𑽓𑽔𑽕𑽖𑽗")} now`,
+      `call ${maskLength("𑽗𑽙𑽙𑽙𑽑𑽒𑽓𑽔𑽕𑽖𑽗")} now`,
     );
     expect(filter.censor("call 𑛡𑛣𑛣𑛣𑛛𑛜𑛝𑛞𑛟𑛠𑛡 now")).toBe(
-      `call ${mask("𑛡𑛣𑛣𑛣𑛛𑛜𑛝𑛞𑛟𑛠𑛡")} now`,
+      `call ${maskLength("𑛡𑛣𑛣𑛣𑛛𑛜𑛝𑛞𑛟𑛠𑛡")} now`,
     );
   });
 
@@ -385,6 +386,13 @@ describe("textfilters phone package", () => {
     expect(twice).toBe(once);
   });
 
+  it("preserves JavaScript string length for astral digit ranges", () => {
+    const input = "call 𐒧𐒩𐒩𐒩𐒡𐒢𐒣𐒤𐒥𐒦𐒧 now";
+    const output = filter.censor(input);
+    expect(output).toBe(`call ${"*".repeat(22)} now`);
+    expect(output.length).toBe(input.length);
+  });
+
   it("does not censor short numbers, coordinates or date-like sequences", () => {
     expect(filter.censor("мой код 123456")).toBe("мой код 123456");
     expect(filter.censor("координаты 55.7558, 37.6173")).toBe(
@@ -405,6 +413,9 @@ describe("textfilters phone package", () => {
   it("supports custom mask char", () => {
     const custom = createPhoneFilter({ maskChar: "#" });
     expect(custom.censor("+1 202 555 0187")).toBe(mask("+1 202 555 0187", "#"));
+    expect(custom.censor("call 𐒧𐒩𐒩𐒩𐒡𐒢𐒣𐒤𐒥𐒦𐒧 now")).toBe(
+      `call ${maskLength("𐒧𐒩𐒩𐒩𐒡𐒢𐒣𐒤𐒥𐒦𐒧", "#")} now`,
+    );
   });
 
   it("keeps current null and undefined runtime behavior", () => {
