@@ -1,7 +1,7 @@
 import {
   maskCodePointRangesPreservingLength,
   normalizeMaskChar,
-  type TextCensor,
+  normalizeTextInput,
 } from "@textfilters/core";
 import { collectRanges, createMeta } from "./parser.js";
 
@@ -11,9 +11,10 @@ export interface PhoneFilterConfig {
 
 export const PHONE_FILTER_NAME = "phone";
 
-export type PhoneFilter = TextCensor & {
+export interface PhoneFilter {
   readonly name: typeof PHONE_FILTER_NAME;
-};
+  censor(text: unknown): string;
+}
 
 export function createPhoneFilter(config: PhoneFilterConfig = {}): PhoneFilter {
   const maskChar = normalizeMaskChar(config.maskChar);
@@ -21,8 +22,7 @@ export function createPhoneFilter(config: PhoneFilterConfig = {}): PhoneFilter {
   return {
     name: PHONE_FILTER_NAME,
     censor(text) {
-      if (text === null || text === undefined) return "";
-      const source = String(text);
+      const source = normalizeTextInput(text);
       if (!source) return source;
       const meta = createMeta(source);
       const ranges = collectRanges(meta);

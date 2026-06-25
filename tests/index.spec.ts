@@ -18,6 +18,16 @@ describe("textfilters phone package", () => {
     );
   });
 
+  it("normalizes empty and non-string public input through core", () => {
+    expect(filter.censor("")).toBe("");
+    expect(filter.censor(null)).toBe("");
+    expect(filter.censor(undefined)).toBe("");
+    expect(filter.censor(12345)).toBe("12345");
+    expect(filter.censor({ toString: () => "+1 202 555 0187" })).toBe(
+      mask("+1 202 555 0187"),
+    );
+  });
+
   it("censors common RU and international phone formats", () => {
     expect(filter.censor("+7 (999) 123-45-67")).toBe(
       mask("+7 (999) 123-45-67"),
