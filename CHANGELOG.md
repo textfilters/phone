@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/textfilters/phone/compare/v0.1.3...v0.1.4) (2026-06-25)
+
+
+### Bug Fixes
+
+* use shared public input normalization ([b93f3d6](https://github.com/textfilters/phone/commit/b93f3d6958ed230a556b9857ca4594825011b4af))
+
 ## [0.1.3](https://github.com/textfilters/phone/compare/v0.1.2...v0.1.3) (2026-06-21)
 
 
