@@ -20,6 +20,9 @@ The public API is intentionally small:
 - `phoneFilter` is an alias for `createPhoneFilter`.
 - `PhoneFilterConfig` currently supports `maskChar`.
 - `maskChar` is normalized by `@textfilters/core` before masking.
+- `createPhoneScanner()` exposes the same matching behavior as a range scanner.
+- `scanPhoneRanges(text)` returns code point ranges directly for callers that
+  want to compose masking through `@textfilters/core`.
 
 Parser modules are internal implementation details and are not package exports.
 
@@ -27,7 +30,9 @@ Parser modules are internal implementation details and are not package exports.
 
 ```mermaid
 flowchart TD
-  input["Input text"] --> meta["Create metadata"]
+  input["Input text"] --> prefilter{"Phone digit signal?"}
+  prefilter -->|yes| meta["Create metadata"]
+  prefilter -->|no| output
   meta --> scan["Scan phone-like candidates"]
   scan --> reject["Reject false positives"]
   reject --> validate["Validate phone groups"]
@@ -54,17 +59,17 @@ graph TD
 
 ## File Responsibilities
 
-| File                     | Responsibility                                           | Out of scope                                            |
-| ------------------------ | -------------------------------------------------------- | ------------------------------------------------------- |
-| `src/index.ts`           | Public entrypoint and filter orchestration.              | Parser internals or package-private matching details.   |
-| `src/parser.ts`          | Thin internal facade for the entrypoint.                 | Candidate scanning, validation, or false-positive code. |
-| `src/digits.ts`          | Unicode decimal digit folding and raw character mapping. | Text metadata arrays or candidate scanning.             |
-| `src/meta.ts`            | Code point metadata and character classification.        | Phone-specific validation rules.                        |
-| `src/boundaries.ts`      | Boundary checks, cursors, and extension edge parsing.    | Date, coordinate, IP, or amount rules.                  |
-| `src/phone-groups.ts`    | Group count, digit count, plus, and parentheses rules.   | Text scanning or false-positive classification.         |
-| `src/false-positives.ts` | Guards for numeric shapes that are probably not phones.  | Public API exports or final range merging.              |
-| `src/scanner.ts`         | Candidate reads, rejected-run tracking, and range emits. | Final range merging or mask application.                |
-| `src/ranges.ts`          | Candidate collection and final range merge facade.       | Low-level parsing rules.                                |
+| File                     | Responsibility                                                          | Out of scope                                            |
+| ------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------- |
+| `src/index.ts`           | Public entrypoint, scanner facade, prefilter, and filter orchestration. | Parser internals or package-private matching details.   |
+| `src/parser.ts`          | Thin internal facade for the entrypoint.                                | Candidate scanning, validation, or false-positive code. |
+| `src/digits.ts`          | Unicode decimal digit folding and raw character mapping.                | Text metadata arrays or candidate scanning.             |
+| `src/meta.ts`            | Code point metadata and character classification.                       | Phone-specific validation rules.                        |
+| `src/boundaries.ts`      | Boundary checks, cursors, and extension edge parsing.                   | Date, coordinate, IP, or amount rules.                  |
+| `src/phone-groups.ts`    | Group count, digit count, plus, and parentheses rules.                  | Text scanning or false-positive classification.         |
+| `src/false-positives.ts` | Guards for numeric shapes that are probably not phones.                 | Public API exports or final range merging.              |
+| `src/scanner.ts`         | Candidate reads, rejected-run tracking, and range emits.                | Final range merging or mask application.                |
+| `src/ranges.ts`          | Candidate collection and final range merge facade.                      | Low-level parsing rules.                                |
 
 ## Matching Strategy
 
@@ -73,6 +78,11 @@ code points alongside raw normalized characters, zero-width flags, digit flags,
 word character flags, and group separator flags. Raw characters are normalized
 with NFKC and lowercasing through `@textfilters/core`, then Unicode decimal
 digits are folded to ASCII in `digits.ts`.
+
+Before metadata creation, the public scanner checks for a cheap folded digit
+count signal. Clearly clean text returns no ranges without candidate parsing;
+numeric candidate text still runs through the same group validation and
+false-positive guards as before.
 
 The raw arrays and source code point arrays stay aligned: every source code point
 has exactly one metadata slot. Zero-width code points can be skipped by cursors
