@@ -123,7 +123,7 @@ describe("@textfilters/phone scanner", () => {
   });
 
   it("streams merged adjacent ranges", () => {
-    const text = "79991234567(79991234567)";
+    const text = "79991234567(79991234567) or 79991234568";
     const seen: Array<readonly [number, number]> = [];
 
     expect(
@@ -132,7 +132,7 @@ describe("@textfilters/phone scanner", () => {
         return false;
       }),
     ).toBe(false);
-    expect(scanPhoneRanges(text)).toEqual([[0, 24]]);
+    expect(scanPhoneRanges("79991234567(79991234567)")).toEqual([[0, 24]]);
     expect(seen).toEqual([[0, 24]]);
   });
 

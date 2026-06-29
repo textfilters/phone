@@ -107,10 +107,32 @@ export function scanPhoneRangeMatches(
   if (!hasPhoneCandidateInput(input)) return true;
 
   const meta = createMeta(input.text);
-  for (const range of collectRanges(meta)) {
-    if (sink({ range }) === false) return false;
-  }
-  return true;
+  let pending: TextCodePointRange | null = null;
+  let stopped = false;
+
+  const completed = collectCandidateRangeMatches(meta, (range) => {
+    if (pending === null) {
+      pending = range;
+      return true;
+    }
+
+    if (range[0] <= pending[1]) {
+      pending = [pending[0], Math.max(pending[1], range[1])];
+      return true;
+    }
+
+    if (sink({ range: pending }) === false) {
+      stopped = true;
+      return false;
+    }
+
+    pending = range;
+    return true;
+  });
+
+  if (stopped) return false;
+  if (pending === null) return completed !== false;
+  return sink({ range: pending }) !== false && completed !== false;
 }
 
 export function createPhoneFilter(config: PhoneFilterConfig = {}): PhoneFilter {
