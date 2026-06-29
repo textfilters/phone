@@ -51,6 +51,12 @@ import { createPhoneScanner } from "@textfilters/phone";
 const scanner = createPhoneScanner();
 const codePoints = Array.from("call +1 202 555 0187");
 const result = scanner.scan({ text: "call +1 202 555 0187", codePoints });
+const hasPhone = scanner.check({ text: "call +1 202 555 0187", codePoints });
+
+scanner.scan({ text: "call +1 202 555 0187", codePoints }, (match) => {
+  console.log(match.range);
+  return false;
+});
 ```
 
 The default shared instance is exported as `filter`. It has stable `name: "phone"`.
@@ -68,8 +74,9 @@ False-positive guards keep date-like, time-like, coordinate-like, IP/server-like
 See [docs/architecture.md](docs/architecture.md) for the parser flow, module map,
 and change guide.
 
-Run `npm run benchmark:phone` from this package to compare clean, long clean,
-direct phone, phone-like, and late-match cases on the same machine.
+Run `npm run benchmark:phone` from this package to compare scanner setup,
+`check()`, clean, low-digit, direct phone, phone-like, and late-match cases on
+the same machine.
 
 ## Related Textfilters Packages
 

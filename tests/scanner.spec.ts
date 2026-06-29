@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  checkPhoneRanges,
   createPhoneScanner,
+  scanPhoneRangeMatches,
   scanPhoneRanges,
   PHONE_FILTER_NAME,
 } from "../src/index.js";
@@ -34,6 +36,65 @@ describe("@textfilters/phone scanner", () => {
         codePoints: Array.from("plain words only"),
       }),
     ).toEqual({ ranges: [] });
+  });
+
+  it("checks phone candidates without collecting every range", () => {
+    const scanner = createPhoneScanner();
+    const text = "call +1 202 555 0187 or +1 303 555 0199";
+    const input = { text, codePoints: Array.from(text) };
+
+    expect(scanner.check(input)).toBe(true);
+    expect(checkPhoneRanges(input)).toBe(true);
+    expect(scanner.check({ text: "plain words only", codePoints: [] })).toBe(
+      false,
+    );
+  });
+
+  it("streams ranges into a sink and supports early stop", () => {
+    const scanner = createPhoneScanner();
+    const text = "call +1 202 555 0187 or +1 303 555 0199";
+    const seen: Array<readonly [number, number]> = [];
+
+    const completed = scanner.scan(
+      { text, codePoints: Array.from(text) },
+      (match) => {
+        seen.push(match.range);
+        return false;
+      },
+    );
+
+    expect(completed).toBe(false);
+    expect(seen).toEqual([[5, 20]]);
+  });
+
+  it("uses shared-style hints to skip low-digit text", () => {
+    expect(
+      checkPhoneRanges({
+        text: "code 12345",
+        codePoints: Array.from("code 12345"),
+        hints: {
+          textLength: "code 12345".length,
+          digitCount: 5,
+          hasPlus: false,
+          hasPunctuation: false,
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it("streams separated, plus-prefixed, and punctuated ranges", () => {
+    const text = "call +1 (202) 555-0187, then 303.555.0199";
+    const seen: Array<readonly [number, number]> = [];
+
+    expect(
+      scanPhoneRangeMatches({ text, codePoints: Array.from(text) }, (match) => {
+        seen.push(match.range);
+      }),
+    ).toBe(true);
+    expect(seen).toEqual([
+      [5, 22],
+      [29, 41],
+    ]);
   });
 
   it("keeps false-positive guards behind the prefilter", () => {

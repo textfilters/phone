@@ -21,6 +21,10 @@ The public API is intentionally small:
 - `PhoneFilterConfig` currently supports `maskChar`.
 - `maskChar` is normalized by `@textfilters/core` before masking.
 - `createPhoneScanner()` exposes the same matching behavior as a range scanner.
+- `createPhoneScanner().check(input)` returns a boolean without collecting all
+  ranges.
+- `createPhoneScanner().scan(input, sink)` streams ranges and supports early
+  stop when the sink returns `false`.
 - `scanPhoneRanges(text)` returns code point ranges directly for callers that
   want to compose masking through `@textfilters/core`.
 
@@ -80,9 +84,10 @@ with NFKC and lowercasing through `@textfilters/core`, then Unicode decimal
 digits are folded to ASCII in `digits.ts`.
 
 Before metadata creation, the public scanner checks for a cheap folded digit
-count signal. Clearly clean text returns no ranges without candidate parsing;
-numeric candidate text still runs through the same group validation and
-false-positive guards as before.
+count signal. Shared-style hints such as digit count, plus sign, punctuation, and
+text length can reject low-digit text before candidate parsing. Clearly clean
+text returns no ranges without candidate parsing; numeric candidate text still
+runs through the same group validation and false-positive guards as before.
 
 The raw arrays and source code point arrays stay aligned: every source code point
 has exactly one metadata slot. Zero-width code points can be skipped by cursors

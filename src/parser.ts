@@ -1,2 +1,2 @@
 export { createMeta } from "./meta.js";
-export { collectRanges } from "./ranges.js";
+export { collectCandidateRangeMatches, collectRanges } from "./ranges.js";
