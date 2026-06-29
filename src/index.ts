@@ -142,7 +142,5 @@ function hasPhoneCandidate(source: string): boolean {
 }
 
 function hasPhoneCandidateInput(input: PhoneScanInput): boolean {
-  const hints = input.hints;
-  if (hints?.digitCount !== undefined && hints.digitCount < 10) return false;
   return hasPhoneCandidate(input.text);
 }

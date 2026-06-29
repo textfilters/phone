@@ -82,6 +82,31 @@ describe("@textfilters/phone scanner", () => {
     ).toBe(false);
   });
 
+  it("does not let non-folded digit hints hide foldable phone digits", () => {
+    const scanner = createPhoneScanner();
+    const text = "call ⁰¹²³⁴⁵⁶⁷⁸⁹";
+    const input = {
+      text,
+      codePoints: Array.from(text),
+      hints: {
+        textLength: text.length,
+        digitCount: 0,
+        hasPlus: false,
+        hasPunctuation: false,
+      },
+    };
+    const seen: Array<readonly [number, number]> = [];
+
+    expect(scanner.check(input)).toBe(true);
+    expect(
+      scanner.scan(input, (match) => {
+        seen.push(match.range);
+        return false;
+      }),
+    ).toBe(false);
+    expect(seen).toEqual([[5, 15]]);
+  });
+
   it("streams separated, plus-prefixed, and punctuated ranges", () => {
     const text = "call +1 (202) 555-0187, then 303.555.0199";
     const seen: Array<readonly [number, number]> = [];
