@@ -122,6 +122,20 @@ describe("@textfilters/phone scanner", () => {
     ]);
   });
 
+  it("streams merged adjacent ranges", () => {
+    const text = "79991234567(79991234567)";
+    const seen: Array<readonly [number, number]> = [];
+
+    expect(
+      scanPhoneRangeMatches({ text, codePoints: Array.from(text) }, (match) => {
+        seen.push(match.range);
+        return false;
+      }),
+    ).toBe(false);
+    expect(scanPhoneRanges(text)).toEqual([[0, 24]]);
+    expect(seen).toEqual([[0, 24]]);
+  });
+
   it("keeps false-positive guards behind the prefilter", () => {
     expect(scanPhoneRanges("server 10.100.100.100")).toEqual([]);
     expect(scanPhoneRanges("balance 1,234,567,890")).toEqual([]);

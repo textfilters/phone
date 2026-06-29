@@ -107,7 +107,10 @@ export function scanPhoneRangeMatches(
   if (!hasPhoneCandidateInput(input)) return true;
 
   const meta = createMeta(input.text);
-  return collectCandidateRangeMatches(meta, (range) => sink({ range }));
+  for (const range of collectRanges(meta)) {
+    if (sink({ range }) === false) return false;
+  }
+  return true;
 }
 
 export function createPhoneFilter(config: PhoneFilterConfig = {}): PhoneFilter {
