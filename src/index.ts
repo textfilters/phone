@@ -47,6 +47,7 @@ export type PhoneRangeMatchSink = (match: PhoneRangeMatch) => boolean | void;
 
 export interface PhoneRangeScanner {
   readonly name: typeof PHONE_FILTER_NAME;
+  readonly allocationAware: true;
   check(input: PhoneScanInput): boolean;
   scan(input: PhoneScanInput): PhoneRangeScanResult;
   scan(input: PhoneScanInput, sink: PhoneRangeMatchSink): boolean | void;
@@ -71,6 +72,7 @@ export function createPhoneScanner(
 
   return {
     name: PHONE_FILTER_NAME,
+    allocationAware: true,
     check(input) {
       return checkPhoneRanges(input);
     },
@@ -142,5 +144,22 @@ function hasPhoneCandidate(source: string): boolean {
 }
 
 function hasPhoneCandidateInput(input: PhoneScanInput): boolean {
+  const hints = input.hints;
+  if (
+    hints?.digitCount !== undefined &&
+    hints.digitCount < 10 &&
+    hasAsciiOnly(input.text)
+  ) {
+    return false;
+  }
+
   return hasPhoneCandidate(input.text);
+}
+
+function hasAsciiOnly(source: string): boolean {
+  for (let index = 0; index < source.length; index++) {
+    if (source.charCodeAt(index) > 0x7f) return false;
+  }
+
+  return true;
 }
