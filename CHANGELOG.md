@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.5](https://github.com/textfilters/phone/compare/v0.1.4...v0.1.5) (2026-06-30)
+
+
+### Performance Improvements
+
+* align phone scanner with shared hints ([1873e7e](https://github.com/textfilters/phone/commit/1873e7e91f5ca9cec5ef548f9fa086ac890f9a1a))
+* introduce phone scanner prefilter ([0dd7338](https://github.com/textfilters/phone/commit/0dd7338eed4b5d1e27fcb443783a148338389929))
+
 ## [0.1.4](https://github.com/textfilters/phone/compare/v0.1.3...v0.1.4) (2026-06-25)
 
 
