@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.6](https://github.com/textfilters/phone/compare/v0.1.5...v0.1.6) (2026-06-29)
+
+
+### Bug Fixes
+
+* added phone regression coverage ([a6745b7](https://github.com/textfilters/phone/commit/a6745b78fc2a051296f4bcbac8ea308da69c63b6))
+* adopt core length-preserving masking ([672ab6f](https://github.com/textfilters/phone/commit/672ab6faf7169ef01502bae62776ad040d72a1e1))
+* use shared public input normalization ([b93f3d6](https://github.com/textfilters/phone/commit/b93f3d6958ed230a556b9857ca4594825011b4af))
+
 ## [0.1.5](https://github.com/textfilters/phone/compare/v0.1.4...v0.1.5) (2026-06-30)
 
 
