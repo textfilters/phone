@@ -415,6 +415,18 @@ export const collectCandidateRanges = (
   meta: TextMeta,
 ): readonly CodePointRange[] => {
   const ranges: CodePointRange[] = [];
+  collectCandidateRangeMatches(meta, (range) => {
+    ranges.push(range);
+  });
+  return ranges;
+};
+
+export type PhoneCandidateRangeSink = (range: CodePointRange) => boolean | void;
+
+export const collectCandidateRangeMatches = (
+  meta: TextMeta,
+  sink: PhoneCandidateRangeSink,
+): boolean => {
   for (let i = 0; i < meta.codePoints.length; i++) {
     const candidate = parsePhoneCandidate(meta, i);
     if (!candidate) continue;
@@ -422,8 +434,8 @@ export const collectCandidateRanges = (
       i = Math.max(i, candidate.rejectedUntil - 1);
       continue;
     }
-    ranges.push([candidate.start, candidate.end]);
+    if (sink([candidate.start, candidate.end]) === false) return false;
     i = Math.max(i, candidate.end - 1);
   }
-  return ranges;
+  return true;
 };
