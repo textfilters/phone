@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/textfilters/phone/compare/v0.1.5...v0.2.0) (2026-07-01)
+
+
+### Features
+
+* align phone scanner contract ([99c95d6](https://github.com/textfilters/phone/commit/99c95d6c3fb1c429bfdc5e5036e7a4fb3f391792))
+
 ## [0.1.5](https://github.com/textfilters/phone/compare/v0.1.4...v0.1.5) (2026-06-30)
 
 
