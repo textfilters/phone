@@ -1,6 +1,5 @@
 import {
-  maskCodePointRangesPreservingLength,
-  normalizeMaskChar,
+  censorCodePointRanges,
   normalizeTextInput,
   type TextCodePointRange,
 } from "@textfilters/core";
@@ -24,15 +23,17 @@ export interface PhoneFilter {
 
 export interface PhoneScannerConfig {}
 
+export interface PhoneScanHints {
+  readonly textLength?: number;
+  readonly digitCount?: number;
+  readonly hasPlus?: boolean;
+  readonly hasPunctuation?: boolean;
+}
+
 export interface PhoneScanInput {
   readonly text: string;
   readonly codePoints: readonly string[];
-  readonly hints?: {
-    readonly textLength?: number;
-    readonly digitCount?: number;
-    readonly hasPlus?: boolean;
-    readonly hasPunctuation?: boolean;
-  };
+  readonly hints?: PhoneScanHints;
 }
 
 export interface PhoneRangeScanResult {
@@ -137,7 +138,7 @@ export function scanPhoneRangeMatches(
 
 export function createPhoneFilter(config: PhoneFilterConfig = {}): PhoneFilter {
   const scanner = createPhoneScanner();
-  const maskChar = normalizeMaskChar(config.maskChar);
+  const maskChar = config.maskChar ?? "*";
 
   return {
     name: PHONE_FILTER_NAME,
@@ -146,7 +147,7 @@ export function createPhoneFilter(config: PhoneFilterConfig = {}): PhoneFilter {
       if (!source) return source;
       const codePoints = Array.from(source);
       const ranges = scanner.scan({ text: source, codePoints }).ranges;
-      return maskCodePointRangesPreservingLength(codePoints, ranges, maskChar);
+      return censorCodePointRanges(codePoints, ranges, maskChar);
     },
   };
 }
