@@ -36,13 +36,13 @@ export interface PhoneScanInput {
   readonly hints?: PhoneScanHints;
 }
 
-export type PhoneRangeScanResult = {
+export interface PhoneRangeScanResult {
   readonly ranges: readonly TextCodePointRange[];
-};
+}
 
-export type PhoneRangeMatch = {
+export interface PhoneRangeMatch {
   readonly range: TextCodePointRange;
-};
+}
 
 export type PhoneRangeMatchSink = (match: PhoneRangeMatch) => boolean | void;
 
