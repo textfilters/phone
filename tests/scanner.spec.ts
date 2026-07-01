@@ -2,13 +2,38 @@ import { describe, expect, it } from "vitest";
 
 import {
   checkPhoneRanges,
+  createPhoneFilter,
   createPhoneScanner,
   scanPhoneRangeMatches,
   scanPhoneRanges,
   PHONE_FILTER_NAME,
+  type PhoneRangeScanner,
+  type PhoneRangeScanResult,
+  type PhoneScanHints,
 } from "../src/index.js";
 
+const mask = (value: string, maskChar = "*"): string =>
+  maskChar.repeat(Array.from(value).length);
+
 describe("@textfilters/phone scanner", () => {
+  it("keeps scanner contracts compatible with shared range shapes", () => {
+    const scanner: PhoneRangeScanner = createPhoneScanner();
+    const hints: PhoneScanHints = {
+      textLength: "call +1 202 555 0187 now".length,
+      digitCount: 11,
+      hasPlus: true,
+      hasPunctuation: true,
+    };
+    const text = "call +1 202 555 0187 now";
+    const result: PhoneRangeScanResult = scanner.scan({
+      text,
+      codePoints: Array.from(text),
+      hints,
+    });
+
+    expect(result).toEqual({ ranges: [[5, 20]] });
+  });
+
   it("exposes scanner ranges compatible with code point masking", () => {
     const scanner = createPhoneScanner();
     expect(
@@ -20,6 +45,20 @@ describe("@textfilters/phone scanner", () => {
       ranges: [[5, 20]],
     });
     expect(scanner.name).toBe(PHONE_FILTER_NAME);
+  });
+
+  it("keeps the public censor wrapper aligned with scanner ranges", () => {
+    const text = "call +1 202 555 0187 now";
+    const scanner = createPhoneScanner();
+    const ranges = scanner.scan({
+      text,
+      codePoints: Array.from(text),
+    }).ranges;
+
+    expect(ranges).toEqual([[5, 20]]);
+    expect(createPhoneFilter({ maskChar: "#" }).censor(text)).toBe(
+      `call ${mask("+1 202 555 0187", "#")} now`,
+    );
   });
 
   it("keeps accepted phone coverage through the scanner path", () => {
