@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/textfilters/phone/compare/v0.2.0...v0.2.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* updated core dependency to 0.4.0 ([f4c6bb0](https://github.com/textfilters/phone/commit/f4c6bb019a63ced27341e858e0b7288e88853a9e))
+
 ## [0.2.0](https://github.com/textfilters/phone/compare/v0.1.5...v0.2.0) (2026-07-01)
 
 
