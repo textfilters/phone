@@ -25,6 +25,7 @@ import {
   isClearPhoneSuffix,
   isLabeledBookIdentifier,
   isLocalGroupedPhoneSuffix,
+  isNonContactNumericMetadata,
   isRecoverablePhoneSuffix,
   isUuidNumericSuffix,
   isValidTimeParts,
@@ -213,6 +214,9 @@ const parsePhoneCandidate = (
     COMBINING_MARK_RE.test(meta.raw[candidateEnd])
   ) {
     candidateEnd++;
+  }
+  if (isNonContactNumericMetadata(meta, candidateStart, groups)) {
+    return { rejectedUntil: candidateEnd };
   }
   const hasClosingParenthesisBefore = (limit: number): boolean =>
     parenthesisPositions.some(

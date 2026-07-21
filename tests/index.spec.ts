@@ -113,6 +113,26 @@ describe("textfilters phone package", () => {
     expect(filter.censor("1234567890123456")).toBe("1234567890123456");
   });
 
+  it("keeps reviewed non-contact numeric metadata unchanged", () => {
+    const metadata =
+      '{ "cursor": "1784477618588-0", "serverTs": 1784477618588 }';
+
+    expect(filter.censor("-2147483648")).toBe("-2147483648");
+    expect(filter.censor("user-2147483648")).toBe("user-2147483648");
+    expect(filter.censor(metadata)).toBe(metadata);
+    expect(filter.censor('{"cursor":1784477618588}')).toBe(
+      '{"cursor":1784477618588}',
+    );
+
+    expect(filter.censor("-79991234567")).toBe(`-${mask("79991234567")}`);
+    expect(filter.censor('{"phone":1784477618588}')).toBe(
+      `{"phone":${mask("1784477618588")}}`,
+    );
+    expect(filter.censor('{"value":1784477618588}')).toBe(
+      `{"value":${mask("1784477618588")}}`,
+    );
+  });
+
   it("keeps current grouped-number false positive boundaries", () => {
     expect(filter.censor("12 34 56 78 90 12 34")).toBe("12 34 56 78 90 12 34");
     expect(filter.censor("1234 7890 1234 56")).toBe("1234 7890 1234 56");

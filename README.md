@@ -65,7 +65,9 @@ The default shared instance is exported as `filter`. It has stable `name: "phone
 
 The package detects phone-like numeric sequences across common RU and international formats, including Unicode digit forms that normalize to ASCII digits for matching.
 
-False-positive guards keep date-like, time-like, coordinate-like, IP/server-like, and balance-like numeric text outside the masked range.
+False-positive guards keep date-like, time-like, coordinate-like,
+IP/server-like, balance-like, and narrowly reviewed machine-metadata numeric
+text outside the masked range.
 
 `censor()` preserves the original JavaScript string length and is idempotent.
 

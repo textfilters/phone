@@ -655,6 +655,29 @@ export const isLabeledBookIdentifier = (
   );
 };
 
+const JSON_NUMERIC_METADATA_KEY_RE =
+  /(?:^|[,{])\s*"(?:cursor|serverts)"\s*:\s*"?$/iu;
+
+export const isNonContactNumericMetadata = (
+  meta: TextMeta,
+  start: number,
+  groups: readonly string[],
+): boolean => {
+  if (groups.length === 1 && groups[0] === "2147483648") {
+    const sign = previousVisible(meta, start - 1);
+    if (sign >= 0 && meta.raw[sign] === "-") {
+      return true;
+    }
+  }
+
+  if (!/^[0-9]{13}$/u.test(groups[0] ?? "")) {
+    return false;
+  }
+
+  const prefix = meta.raw.slice(Math.max(0, start - 48), start).join("");
+  return JSON_NUMERIC_METADATA_KEY_RE.test(prefix);
+};
+
 export const hasPhoneLabelBefore = (meta: TextMeta, pos: number): boolean => {
   let cursor = previousContent(meta, pos - 1);
   if (cursor < 0 || !meta.wordChar[cursor]) return false;

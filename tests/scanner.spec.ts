@@ -178,5 +178,12 @@ describe("@textfilters/phone scanner", () => {
   it("keeps false-positive guards behind the prefilter", () => {
     expect(scanPhoneRanges("server 10.100.100.100")).toEqual([]);
     expect(scanPhoneRanges("balance 1,234,567,890")).toEqual([]);
+    expect(scanPhoneRanges("-2147483648")).toEqual([]);
+    expect(
+      scanPhoneRanges(
+        '{ "cursor": "1784477618588-0", "serverTs": 1784477618588 }',
+      ),
+    ).toEqual([]);
+    expect(scanPhoneRanges('{"phone":1784477618588}')).toHaveLength(1);
   });
 });
