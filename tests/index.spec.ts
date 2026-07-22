@@ -189,6 +189,21 @@ describe("textfilters phone package", () => {
       `{"serverTs":"${mask("178447７618588")}"}`,
     );
 
+    expect(filter.censor('{"serverTs":"1784477618588-0"}')).toBe(
+      `{"serverTs":"${mask("1784477618588")}-0"}`,
+    );
+    expect(filter.censor('{"cursor":"1784477618588-1"}')).toBe(
+      `{"cursor":"${mask("1784477618588")}-1"}`,
+    );
+
+    expect(filter.censor("-214748\u200B3648")).toBe(
+      `-${mask("214748\u200B3648")}`,
+    );
+    expect(filter.censor("-２147483648")).toBe(`-${mask("２147483648")}`);
+    expect(filter.censor("-\u200B2147483648")).toBe(
+      `-\u200B${mask("2147483648")}`,
+    );
+
     expect(filter.censor("-79991234567")).toBe(`-${mask("79991234567")}`);
     expect(filter.censor('{"phone":1784477618588}')).toBe(
       `{"phone":${mask("1784477618588")}}`,

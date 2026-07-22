@@ -72,8 +72,9 @@ text outside the masked range. JSON metadata coverage is limited to exact
 suffix. JSON whitespace before the value is handled without a fixed look-back
 limit. Metadata keys remain case-sensitive and support standard JSON string
 escapes. Exempt value prefixes must contain the exact ASCII source characters,
-without ignored or normalized characters; any following phone-like group remains
-eligible for masking.
+without ignored or normalized characters; a following group only preserves the
+prefix when that suffix is independently recoverable as a phone. The signed
+32-bit minimum sentinel follows the same exact-source rule.
 
 `censor()` preserves the original JavaScript string length and is idempotent.
 

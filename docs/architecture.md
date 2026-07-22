@@ -116,7 +116,9 @@ or rejected non-phone numeric runs.
   structurally without a fixed look-back window. Key matching uses original
   case-sensitive JSON strings and decodes standard key escapes. Exempt value
   prefixes are verified against the original ASCII source span so ignored or
-  normalized characters cannot broaden the exception.
+  normalized characters cannot broaden the exception. A later group preserves
+  the prefix only when it independently satisfies phone-suffix recovery; the
+  signed 32-bit sentinel also requires its exact ASCII source spelling.
 
 Some prefixes are rejected only until the end of the structured part. This lets a
 valid phone after a neutral numeric prefix still be rescanned and censored.

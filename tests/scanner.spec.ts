@@ -276,5 +276,30 @@ describe("@textfilters/phone scanner", () => {
       [metadataStart, metadataStart + "1784477618588".length],
       [phoneStart, phoneStart + "79991234567".length],
     ]);
+
+    const unsupportedMetadataSuffixes = [
+      '{"serverTs":"1784477618588-0"}',
+      '{"cursor":"1784477618588-1"}',
+    ];
+    for (const input of unsupportedMetadataSuffixes) {
+      const valueStart = input.indexOf("1784477618588");
+      expect(scanPhoneRanges(input)).toEqual([
+        [valueStart, valueStart + "1784477618588".length],
+      ]);
+    }
+
+    const obfuscatedSentinels = [
+      ["-214748\u200B3648", "214748\u200B3648"],
+      ["-２147483648", "２147483648"],
+      ["-\u200B2147483648", "2147483648"],
+    ] as const;
+    for (const [input, value] of obfuscatedSentinels) {
+      const valueStart = Array.from(
+        input.slice(0, input.indexOf(value)),
+      ).length;
+      expect(scanPhoneRanges(input)).toEqual([
+        [valueStart, valueStart + Array.from(value).length],
+      ]);
+    }
   });
 });

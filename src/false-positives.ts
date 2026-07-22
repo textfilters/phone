@@ -807,11 +807,13 @@ export const getNonContactNumericMetadataEnd = (
   groupStarts: readonly number[],
   groupEnds: readonly number[],
 ): number | null => {
-  if (groups.length === 1 && groups[0] === "2147483648") {
-    const sign = previousVisible(meta, start - 1);
-    if (sign >= 0 && meta.raw[sign] === "-") {
-      return candidateEnd;
-    }
+  if (
+    groups.length === 1 &&
+    groups[0] === "2147483648" &&
+    meta.codePoints[start - 1] === "-" &&
+    sourceSpanEquals(meta, start, candidateEnd, "2147483648")
+  ) {
+    return candidateEnd;
   }
 
   if (!/^[0-9]{13}$/u.test(groups[0] ?? "")) {
@@ -846,10 +848,21 @@ export const getNonContactNumericMetadataEnd = (
   if (groups.length > nextGroupIndex) {
     const nextGroupStart = groupStarts[nextGroupIndex];
     const separator = separators[nextGroupIndex - 1];
+    const suffixGroups = groups.slice(nextGroupIndex);
     if (
       nextGroupStart === undefined ||
       separator === undefined ||
-      !sourceSpanEquals(meta, protectedEnd, nextGroupStart, separator)
+      !sourceSpanEquals(meta, protectedEnd, nextGroupStart, separator) ||
+      !isRecoverablePhoneSuffix(suffixGroups) ||
+      !isValidPhoneGroups(suffixGroups, {
+        hasPlus: false,
+        hasParentheses: false,
+      }) ||
+      getStructuredFalsePositive(
+        suffixGroups,
+        separators.slice(nextGroupIndex),
+        { hasPlus: false },
+      ) !== null
     ) {
       return null;
     }
