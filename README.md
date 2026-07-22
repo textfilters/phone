@@ -71,7 +71,9 @@ text outside the masked range. JSON metadata coverage is limited to exact
 13-digit `serverTs` values and 13-digit `cursor` values with an optional `-0`
 suffix. JSON whitespace before the value is handled without a fixed look-back
 limit. Metadata keys remain case-sensitive and support standard JSON string
-escapes; any following phone-like group remains eligible for masking.
+escapes. Exempt value prefixes must contain the exact ASCII source characters,
+without ignored or normalized characters; any following phone-like group remains
+eligible for masking.
 
 `censor()` preserves the original JavaScript string length and is idempotent.
 

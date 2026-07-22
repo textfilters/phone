@@ -166,6 +166,29 @@ describe("textfilters phone package", () => {
       `{"serverts":${mask("1784477618588")}}`,
     );
 
+    const zeroWidthServerTimestamp = '{"serverTs":"178447\u200B7618588"}';
+    const zeroWidthCursorSequence = '{"cursor":"1784477618588-\u200B0"}';
+    const trailingZeroWidthCursor = '{"cursor":"1784477618588\u200B"}';
+    const zeroWidthServerTimestampWithPhone =
+      '{"serverTs":"1784477618588\u200B-79991234567"}';
+    const unicodeDigitServerTimestamp = '{"serverTs":"178447７618588"}';
+
+    expect(filter.censor(zeroWidthServerTimestamp)).toBe(
+      `{"serverTs":"${mask("178447\u200B7618588")}"}`,
+    );
+    expect(filter.censor(zeroWidthCursorSequence)).toBe(
+      `{"cursor":"${mask("1784477618588")}-\u200B0"}`,
+    );
+    expect(filter.censor(trailingZeroWidthCursor)).toBe(
+      `{"cursor":"${mask("1784477618588\u200B")}"}`,
+    );
+    expect(filter.censor(zeroWidthServerTimestampWithPhone)).toBe(
+      `{"serverTs":"${mask("1784477618588")}\u200B-${mask("79991234567")}"}`,
+    );
+    expect(filter.censor(unicodeDigitServerTimestamp)).toBe(
+      `{"serverTs":"${mask("178447７618588")}"}`,
+    );
+
     expect(filter.censor("-79991234567")).toBe(`-${mask("79991234567")}`);
     expect(filter.censor('{"phone":1784477618588}')).toBe(
       `{"phone":${mask("1784477618588")}}`,

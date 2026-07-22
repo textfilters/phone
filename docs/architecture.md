@@ -114,7 +114,9 @@ or rejected non-phone numeric runs.
   and 13-digit JSON `cursor` values with an optional `-0` suffix; later groups
   remain eligible for phone suffix recovery, and JSON whitespace is parsed
   structurally without a fixed look-back window. Key matching uses original
-  case-sensitive JSON strings and decodes standard key escapes.
+  case-sensitive JSON strings and decodes standard key escapes. Exempt value
+  prefixes are verified against the original ASCII source span so ignored or
+  normalized characters cannot broaden the exception.
 
 Some prefixes are rejected only until the end of the structured part. This lets a
 valid phone after a neutral numeric prefix still be rescanned and censored.

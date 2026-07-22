@@ -238,5 +238,43 @@ describe("@textfilters/phone scanner", () => {
     expect(scanPhoneRanges('{"CURSOR":1784477618588}')).toHaveLength(1);
     expect(scanPhoneRanges('{"serverts":1784477618588}')).toHaveLength(1);
     expect(scanPhoneRanges('{"phone":1784477618588}')).toHaveLength(1);
+
+    const obfuscatedMetadataValues = [
+      [
+        '{"serverTs":"178447\u200B7618588"}',
+        "178447\u200B7618588",
+        "178447\u200B7618588",
+      ],
+      [
+        '{"cursor":"1784477618588-\u200B0"}',
+        "1784477618588-\u200B0",
+        "1784477618588",
+      ],
+      [
+        '{"cursor":"1784477618588\u200B"}',
+        "1784477618588\u200B",
+        "1784477618588\u200B",
+      ],
+      ['{"serverTs":"178447７618588"}', "178447７618588", "178447７618588"],
+    ] as const;
+
+    for (const [input, value, matchedValue] of obfuscatedMetadataValues) {
+      const valueStart = Array.from(
+        input.slice(0, input.indexOf(value)),
+      ).length;
+      expect(scanPhoneRanges(input)).toEqual([
+        [valueStart, valueStart + Array.from(matchedValue).length],
+      ]);
+    }
+
+    const zeroWidthServerTimestampWithPhone =
+      '{"serverTs":"1784477618588\u200B-79991234567"}';
+    const metadataStart =
+      zeroWidthServerTimestampWithPhone.indexOf("1784477618588");
+    const phoneStart = zeroWidthServerTimestampWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(zeroWidthServerTimestampWithPhone)).toEqual([
+      [metadataStart, metadataStart + "1784477618588".length],
+      [phoneStart, phoneStart + "79991234567".length],
+    ]);
   });
 });

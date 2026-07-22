@@ -221,6 +221,7 @@ const parsePhoneCandidate = (
     candidateEnd,
     groups,
     groupSeparators,
+    groupStarts,
     groupEnds,
   );
   if (nonContactNumericMetadataEnd !== null) {

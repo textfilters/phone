@@ -657,6 +657,11 @@ export const isLabeledBookIdentifier = (
 
 type JsonNumericMetadataKey = "cursor" | "serverTs";
 
+interface JsonNumericMetadata {
+  readonly key: JsonNumericMetadataKey;
+  readonly quoted: boolean;
+}
+
 const JSON_WHITESPACE = new Set([" ", "\t", "\n", "\r"]);
 
 const skipJsonWhitespaceBackward = (meta: TextMeta, start: number): number => {
@@ -716,10 +721,12 @@ const decodeJsonMetadataKey = (
 const jsonNumericMetadataKeyBefore = (
   meta: TextMeta,
   start: number,
-): JsonNumericMetadataKey | null => {
+): JsonNumericMetadata | null => {
   let cursor = start - 1;
+  let quoted = false;
 
   if (cursor >= 0 && meta.codePoints[cursor] === '"') {
+    quoted = true;
     cursor--;
   }
   cursor = skipJsonWhitespaceBackward(meta, cursor);
@@ -751,7 +758,44 @@ const jsonNumericMetadataKeyBefore = (
     return null;
   }
 
-  return decodeJsonMetadataKey(meta, openingQuote, closingQuote);
+  const key = decodeJsonMetadataKey(meta, openingQuote, closingQuote);
+  return key === null ? null : { key, quoted };
+};
+
+const sourceSpanEquals = (
+  meta: TextMeta,
+  start: number,
+  end: number,
+  expected: string,
+): boolean => {
+  const expectedCodePoints = Array.from(expected);
+  if (end - start !== expectedCodePoints.length) return false;
+
+  return expectedCodePoints.every(
+    (codePoint, offset) => meta.codePoints[start + offset] === codePoint,
+  );
+};
+
+const hasExactJsonMetadataValueEnd = (
+  meta: TextMeta,
+  end: number,
+  quoted: boolean,
+): boolean => {
+  if (quoted) return meta.codePoints[end] === '"';
+
+  let cursor = end;
+  while (
+    cursor < meta.codePoints.length &&
+    JSON_WHITESPACE.has(meta.codePoints[cursor])
+  ) {
+    cursor++;
+  }
+
+  return (
+    cursor === meta.codePoints.length ||
+    meta.codePoints[cursor] === "," ||
+    meta.codePoints[cursor] === "}"
+  );
 };
 
 export const getNonContactNumericMetadataEnd = (
@@ -760,6 +804,7 @@ export const getNonContactNumericMetadataEnd = (
   candidateEnd: number,
   groups: readonly string[],
   separators: readonly string[],
+  groupStarts: readonly number[],
   groupEnds: readonly number[],
 ): number | null => {
   if (groups.length === 1 && groups[0] === "2147483648") {
@@ -773,20 +818,48 @@ export const getNonContactNumericMetadataEnd = (
     return null;
   }
 
-  const metadataKey = jsonNumericMetadataKeyBefore(meta, start);
-
-  if (metadataKey === "serverTs") {
-    return groupEnds[0] ?? null;
-  }
-
-  if (metadataKey !== "cursor") {
+  const metadata = jsonNumericMetadataKeyBefore(meta, start);
+  const firstGroupEnd = groupEnds[0];
+  if (
+    metadata === null ||
+    firstGroupEnd === undefined ||
+    !sourceSpanEquals(meta, start, firstGroupEnd, groups[0] ?? "")
+  ) {
     return null;
   }
 
-  const cursorSequenceEnd =
-    groups[1] === "0" && separators[0] === "-" ? groupEnds[1] : undefined;
+  let protectedEnd = firstGroupEnd;
+  let nextGroupIndex = 1;
 
-  return cursorSequenceEnd ?? groupEnds[0] ?? null;
+  if (metadata.key === "cursor" && groups[1] === "0" && separators[0] === "-") {
+    const cursorSequenceEnd = groupEnds[1];
+    if (
+      cursorSequenceEnd === undefined ||
+      !sourceSpanEquals(meta, start, cursorSequenceEnd, `${groups[0]}-0`)
+    ) {
+      return null;
+    }
+    protectedEnd = cursorSequenceEnd;
+    nextGroupIndex = 2;
+  }
+
+  if (groups.length > nextGroupIndex) {
+    const nextGroupStart = groupStarts[nextGroupIndex];
+    const separator = separators[nextGroupIndex - 1];
+    if (
+      nextGroupStart === undefined ||
+      separator === undefined ||
+      !sourceSpanEquals(meta, protectedEnd, nextGroupStart, separator)
+    ) {
+      return null;
+    }
+  } else if (
+    !hasExactJsonMetadataValueEnd(meta, protectedEnd, metadata.quoted)
+  ) {
+    return null;
+  }
+
+  return protectedEnd;
 };
 
 export const hasPhoneLabelBefore = (meta: TextMeta, pos: number): boolean => {
