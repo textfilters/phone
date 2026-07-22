@@ -113,7 +113,8 @@ or rejected non-phone numeric runs.
 - the signed 32-bit minimum sentinel, exact 13-digit JSON `serverTs` values,
   and 13-digit JSON `cursor` values with an optional `-0` suffix; later groups
   remain eligible for phone suffix recovery, and JSON whitespace is parsed
-  structurally without a fixed look-back window.
+  structurally without a fixed look-back window. Key matching uses original
+  case-sensitive JSON strings and decodes standard key escapes.
 
 Some prefixes are rejected only until the end of the structured part. This lets a
 valid phone after a neutral numeric prefix still be rescanned and censored.

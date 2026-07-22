@@ -655,14 +655,62 @@ export const isLabeledBookIdentifier = (
   );
 };
 
-type JsonNumericMetadataKey = "cursor" | "serverts";
+type JsonNumericMetadataKey = "cursor" | "serverTs";
+
+const JSON_WHITESPACE = new Set([" ", "\t", "\n", "\r"]);
 
 const skipJsonWhitespaceBackward = (meta: TextMeta, start: number): number => {
   let cursor = start;
-  while (cursor >= 0 && WHITESPACE_RE.test(meta.raw[cursor])) {
+  while (cursor >= 0 && JSON_WHITESPACE.has(meta.codePoints[cursor])) {
     cursor--;
   }
   return cursor;
+};
+
+const isEscapedJsonQuote = (meta: TextMeta, quotePosition: number): boolean => {
+  let slashCount = 0;
+  for (
+    let cursor = quotePosition - 1;
+    cursor >= 0 && meta.codePoints[cursor] === "\\";
+    cursor--
+  ) {
+    slashCount++;
+  }
+  return slashCount % 2 === 1;
+};
+
+const jsonStringStartBefore = (
+  meta: TextMeta,
+  closingQuote: number,
+): number | null => {
+  for (let cursor = closingQuote - 1; cursor >= 0; cursor--) {
+    if (meta.codePoints[cursor] === '"' && !isEscapedJsonQuote(meta, cursor)) {
+      return cursor;
+    }
+  }
+  return null;
+};
+
+const decodeJsonMetadataKey = (
+  meta: TextMeta,
+  openingQuote: number,
+  closingQuote: number,
+): JsonNumericMetadataKey | null => {
+  const encodedKey = meta.codePoints
+    .slice(openingQuote, closingQuote + 1)
+    .join("");
+
+  if (encodedKey === '"cursor"') return "cursor";
+  if (encodedKey === '"serverTs"') return "serverTs";
+
+  try {
+    const decodedKey: unknown = JSON.parse(encodedKey);
+    return decodedKey === "cursor" || decodedKey === "serverTs"
+      ? decodedKey
+      : null;
+  } catch {
+    return null;
+  }
 };
 
 const jsonNumericMetadataKeyBefore = (
@@ -671,39 +719,39 @@ const jsonNumericMetadataKeyBefore = (
 ): JsonNumericMetadataKey | null => {
   let cursor = start - 1;
 
-  if (cursor >= 0 && meta.raw[cursor] === '"') {
+  if (cursor >= 0 && meta.codePoints[cursor] === '"') {
     cursor--;
   }
   cursor = skipJsonWhitespaceBackward(meta, cursor);
-  if (cursor < 0 || meta.raw[cursor] !== ":") {
+  if (cursor < 0 || meta.codePoints[cursor] !== ":") {
     return null;
   }
 
   cursor = skipJsonWhitespaceBackward(meta, cursor - 1);
-  if (cursor < 0 || meta.raw[cursor] !== '"') {
+  if (
+    cursor < 0 ||
+    meta.codePoints[cursor] !== '"' ||
+    isEscapedJsonQuote(meta, cursor)
+  ) {
     return null;
   }
 
-  cursor--;
-  const keyCharacters: string[] = [];
-  while (cursor >= 0 && meta.raw[cursor] !== '"') {
-    keyCharacters.push(meta.raw[cursor]);
-    if (keyCharacters.length > "serverts".length) {
-      return null;
-    }
-    cursor--;
-  }
-  if (cursor < 0 || meta.raw[cursor] !== '"') {
+  const closingQuote = cursor;
+  const openingQuote = jsonStringStartBefore(meta, closingQuote);
+  if (openingQuote === null) {
     return null;
   }
 
-  cursor = skipJsonWhitespaceBackward(meta, cursor - 1);
-  if (cursor >= 0 && meta.raw[cursor] !== "{" && meta.raw[cursor] !== ",") {
+  cursor = skipJsonWhitespaceBackward(meta, openingQuote - 1);
+  if (
+    cursor >= 0 &&
+    meta.codePoints[cursor] !== "{" &&
+    meta.codePoints[cursor] !== ","
+  ) {
     return null;
   }
 
-  const key = keyCharacters.reverse().join("").toLowerCase();
-  return key === "cursor" || key === "serverts" ? key : null;
+  return decodeJsonMetadataKey(meta, openingQuote, closingQuote);
 };
 
 export const getNonContactNumericMetadataEnd = (
@@ -727,7 +775,7 @@ export const getNonContactNumericMetadataEnd = (
 
   const metadataKey = jsonNumericMetadataKeyBefore(meta, start);
 
-  if (metadataKey === "serverts") {
+  if (metadataKey === "serverTs") {
     return groupEnds[0] ?? null;
   }
 

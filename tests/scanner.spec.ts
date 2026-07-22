@@ -221,6 +221,22 @@ describe("@textfilters/phone scanner", () => {
     expect(scanPhoneRanges(spacedCursorWithPhone)).toEqual([
       [spacedCursorPhoneStart, spacedCursorPhoneStart + "79991234567".length],
     ]);
+
+    const escapedServerTimestamp = '{"server\\u0054s":1784477618588}';
+    const escapedCursor = '{"cur\\u0073or":"1784477618588-0"}';
+    expect(scanPhoneRanges(escapedServerTimestamp)).toEqual([]);
+    expect(scanPhoneRanges(escapedCursor)).toEqual([]);
+
+    const escapedServerTimestampWithPhone =
+      '{"server\\u0054s":"1784477618588-79991234567"}';
+    const escapedServerPhoneStart =
+      escapedServerTimestampWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(escapedServerTimestampWithPhone)).toEqual([
+      [escapedServerPhoneStart, escapedServerPhoneStart + "79991234567".length],
+    ]);
+
+    expect(scanPhoneRanges('{"CURSOR":1784477618588}')).toHaveLength(1);
+    expect(scanPhoneRanges('{"serverts":1784477618588}')).toHaveLength(1);
     expect(scanPhoneRanges('{"phone":1784477618588}')).toHaveLength(1);
   });
 });
