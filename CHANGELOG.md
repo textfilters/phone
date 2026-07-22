@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/textfilters/phone/compare/v0.2.1...v0.2.2) (2026-07-22)
+
+
+### Bug Fixes
+
+* index numeric metadata validation ([0e045ae](https://github.com/textfilters/phone/commit/0e045aebb75cd20872aeab19173fc927cf03502d))
+
 ## [0.2.1](https://github.com/textfilters/phone/compare/v0.2.0...v0.2.1) (2026-07-14)
 
 
