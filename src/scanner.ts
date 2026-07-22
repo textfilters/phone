@@ -14,6 +14,7 @@ import {
   getLeadingTimeEnd,
   getLeadingVersionPhoneSuffixStart,
   getMinuteAfterTimeEnd,
+  getNonContactNumericMetadataEnd,
   getSecondAfterTimeEnd,
   getSignedLongitudeEnd,
   getStructuredFalsePositive,
@@ -25,7 +26,6 @@ import {
   isClearPhoneSuffix,
   isLabeledBookIdentifier,
   isLocalGroupedPhoneSuffix,
-  isNonContactNumericMetadata,
   isRecoverablePhoneSuffix,
   isUuidNumericSuffix,
   isValidTimeParts,
@@ -215,8 +215,16 @@ const parsePhoneCandidate = (
   ) {
     candidateEnd++;
   }
-  if (isNonContactNumericMetadata(meta, candidateStart, groups)) {
-    return { rejectedUntil: candidateEnd };
+  const nonContactNumericMetadataEnd = getNonContactNumericMetadataEnd(
+    meta,
+    candidateStart,
+    candidateEnd,
+    groups,
+    groupSeparators,
+    groupEnds,
+  );
+  if (nonContactNumericMetadataEnd !== null) {
+    return { rejectedUntil: nonContactNumericMetadataEnd };
   }
   const hasClosingParenthesisBefore = (limit: number): boolean =>
     parenthesisPositions.some(

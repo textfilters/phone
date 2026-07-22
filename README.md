@@ -67,7 +67,9 @@ The package detects phone-like numeric sequences across common RU and internatio
 
 False-positive guards keep date-like, time-like, coordinate-like,
 IP/server-like, balance-like, and narrowly reviewed machine-metadata numeric
-text outside the masked range.
+text outside the masked range. JSON metadata coverage is limited to exact
+13-digit `serverTs` values and 13-digit `cursor` values with an optional `-0`
+suffix; any following phone-like group remains eligible for masking.
 
 `censor()` preserves the original JavaScript string length and is idempotent.
 

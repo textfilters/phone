@@ -184,6 +184,31 @@ describe("@textfilters/phone scanner", () => {
         '{ "cursor": "1784477618588-0", "serverTs": 1784477618588 }',
       ),
     ).toEqual([]);
+    const cursorWithPhone = '{"cursor":"1784477618588-79991234567"}';
+    const cursorPhoneStart = cursorWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(cursorWithPhone)).toEqual([
+      [cursorPhoneStart, cursorPhoneStart + "79991234567".length],
+    ]);
+
+    const cursorSequenceWithPhone = '{"cursor":"1784477618588-0-79991234567"}';
+    const cursorSequencePhoneStart =
+      cursorSequenceWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(cursorSequenceWithPhone)).toEqual([
+      [
+        cursorSequencePhoneStart,
+        cursorSequencePhoneStart + "79991234567".length,
+      ],
+    ]);
+
+    const serverTimestampWithPhone = '{"serverTs":"1784477618588-79991234567"}';
+    const serverTimestampPhoneStart =
+      serverTimestampWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(serverTimestampWithPhone)).toEqual([
+      [
+        serverTimestampPhoneStart,
+        serverTimestampPhoneStart + "79991234567".length,
+      ],
+    ]);
     expect(scanPhoneRanges('{"phone":1784477618588}')).toHaveLength(1);
   });
 });

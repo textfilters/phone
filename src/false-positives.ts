@@ -656,26 +656,44 @@ export const isLabeledBookIdentifier = (
 };
 
 const JSON_NUMERIC_METADATA_KEY_RE =
-  /(?:^|[,{])\s*"(?:cursor|serverts)"\s*:\s*"?$/iu;
+  /(?:^|[,{])\s*"(cursor|serverts)"\s*:\s*"?$/iu;
 
-export const isNonContactNumericMetadata = (
+export const getNonContactNumericMetadataEnd = (
   meta: TextMeta,
   start: number,
+  candidateEnd: number,
   groups: readonly string[],
-): boolean => {
+  separators: readonly string[],
+  groupEnds: readonly number[],
+): number | null => {
   if (groups.length === 1 && groups[0] === "2147483648") {
     const sign = previousVisible(meta, start - 1);
     if (sign >= 0 && meta.raw[sign] === "-") {
-      return true;
+      return candidateEnd;
     }
   }
 
   if (!/^[0-9]{13}$/u.test(groups[0] ?? "")) {
-    return false;
+    return null;
   }
 
   const prefix = meta.raw.slice(Math.max(0, start - 48), start).join("");
-  return JSON_NUMERIC_METADATA_KEY_RE.test(prefix);
+  const metadataKey = prefix
+    .match(JSON_NUMERIC_METADATA_KEY_RE)?.[1]
+    ?.toLowerCase();
+
+  if (metadataKey === "serverts") {
+    return groupEnds[0] ?? null;
+  }
+
+  if (metadataKey !== "cursor") {
+    return null;
+  }
+
+  const cursorSequenceEnd =
+    groups[1] === "0" && separators[0] === "-" ? groupEnds[1] : undefined;
+
+  return cursorSequenceEnd ?? groupEnds[0] ?? null;
 };
 
 export const hasPhoneLabelBefore = (meta: TextMeta, pos: number): boolean => {

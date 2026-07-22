@@ -124,6 +124,20 @@ describe("textfilters phone package", () => {
       '{"cursor":1784477618588}',
     );
 
+    const cursorWithPhone = '{"cursor":"1784477618588-79991234567"}';
+    const cursorSequenceWithPhone = '{"cursor":"1784477618588-0-79991234567"}';
+    const serverTimestampWithPhone = '{"serverTs":"1784477618588-79991234567"}';
+
+    expect(filter.censor(cursorWithPhone)).toBe(
+      `{"cursor":"1784477618588-${mask("79991234567")}"}`,
+    );
+    expect(filter.censor(cursorSequenceWithPhone)).toBe(
+      `{"cursor":"1784477618588-0-${mask("79991234567")}"}`,
+    );
+    expect(filter.censor(serverTimestampWithPhone)).toBe(
+      `{"serverTs":"1784477618588-${mask("79991234567")}"}`,
+    );
+
     expect(filter.censor("-79991234567")).toBe(`-${mask("79991234567")}`);
     expect(filter.censor('{"phone":1784477618588}')).toBe(
       `{"phone":${mask("1784477618588")}}`,
