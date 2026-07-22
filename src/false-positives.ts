@@ -659,6 +659,7 @@ type JsonNumericMetadataKey = "cursor" | "serverTs";
 
 interface JsonNumericMetadata {
   readonly key: JsonNumericMetadataKey;
+  readonly keyStart: number;
   readonly quoted: boolean;
 }
 
@@ -759,7 +760,93 @@ const jsonNumericMetadataKeyBefore = (
   }
 
   const key = decodeJsonMetadataKey(meta, openingQuote, closingQuote);
-  return key === null ? null : { key, quoted };
+  return key === null ? null : { key, keyStart: openingQuote, quoted };
+};
+
+const jsonObjectStartBefore = (
+  meta: TextMeta,
+  position: number,
+): number | null => {
+  let depth = 0;
+  let inString = false;
+
+  for (let cursor = position - 1; cursor >= 0; cursor--) {
+    const codePoint = meta.codePoints[cursor];
+    if (codePoint === '"' && !isEscapedJsonQuote(meta, cursor)) {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+
+    if (codePoint === "}") {
+      depth++;
+    } else if (codePoint === "{") {
+      if (depth === 0) return cursor;
+      depth--;
+    }
+  }
+
+  return null;
+};
+
+const jsonObjectEndAfter = (
+  meta: TextMeta,
+  objectStart: number,
+): number | null => {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let cursor = objectStart; cursor < meta.codePoints.length; cursor++) {
+    const codePoint = meta.codePoints[cursor];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (codePoint === "\\") {
+        escaped = true;
+      } else if (codePoint === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (codePoint === '"') {
+      inString = true;
+    } else if (codePoint === "{") {
+      depth++;
+    } else if (codePoint === "}") {
+      depth--;
+      if (depth === 0) return cursor + 1;
+    }
+  }
+
+  return null;
+};
+
+const hasCompleteJsonMetadataObject = (
+  meta: TextMeta,
+  metadata: JsonNumericMetadata,
+  valueEnd: number,
+): boolean => {
+  const objectStart = jsonObjectStartBefore(meta, metadata.keyStart);
+  if (objectStart === null) return false;
+
+  const objectEnd = jsonObjectEndAfter(meta, objectStart);
+  if (objectEnd === null || objectEnd <= valueEnd) return false;
+
+  try {
+    const parsed: unknown = JSON.parse(
+      meta.codePoints.slice(objectStart, objectEnd).join(""),
+    );
+    return (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      !Array.isArray(parsed) &&
+      Object.prototype.hasOwnProperty.call(parsed, metadata.key)
+    );
+  } catch {
+    return false;
+  }
 };
 
 const sourceSpanEquals = (
@@ -791,11 +878,7 @@ const hasExactJsonMetadataValueEnd = (
     cursor++;
   }
 
-  return (
-    cursor === meta.codePoints.length ||
-    meta.codePoints[cursor] === "," ||
-    meta.codePoints[cursor] === "}"
-  );
+  return meta.codePoints[cursor] === "," || meta.codePoints[cursor] === "}";
 };
 
 export const getNonContactNumericMetadataEnd = (
@@ -825,7 +908,8 @@ export const getNonContactNumericMetadataEnd = (
   if (
     metadata === null ||
     firstGroupEnd === undefined ||
-    !sourceSpanEquals(meta, start, firstGroupEnd, groups[0] ?? "")
+    !sourceSpanEquals(meta, start, firstGroupEnd, groups[0] ?? "") ||
+    !hasCompleteJsonMetadataObject(meta, metadata, candidateEnd)
   ) {
     return null;
   }

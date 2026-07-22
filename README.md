@@ -74,7 +74,9 @@ limit. Metadata keys remain case-sensitive and support standard JSON string
 escapes. Exempt value prefixes must contain the exact ASCII source characters,
 without ignored or normalized characters; a following group only preserves the
 prefix when that suffix is independently recoverable as a phone. The signed
-32-bit minimum sentinel follows the same exact-source rule.
+32-bit minimum sentinel follows the same exact-source rule. JSON metadata
+exceptions require a complete, valid containing object; standalone key/value
+fragments are not exempt.
 
 `censor()` preserves the original JavaScript string length and is idempotent.
 

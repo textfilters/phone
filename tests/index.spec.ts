@@ -196,6 +196,22 @@ describe("textfilters phone package", () => {
       `{"cursor":"${mask("1784477618588")}-1"}`,
     );
 
+    expect(filter.censor('note, "serverTs":1784477618588')).toBe(
+      `note, "serverTs":${mask("1784477618588")}`,
+    );
+    expect(filter.censor('"serverTs":1784477618588')).toBe(
+      `"serverTs":${mask("1784477618588")}`,
+    );
+    expect(filter.censor('{"serverTs":1784477618588')).toBe(
+      `{"serverTs":${mask("1784477618588")}`,
+    );
+    expect(filter.censor('note {"serverTs":1784477618588} after')).toBe(
+      'note {"serverTs":1784477618588} after',
+    );
+    const nestedMetadata =
+      'note {"nested":{"note":"{","serverTs":1784477618588}} after';
+    expect(filter.censor(nestedMetadata)).toBe(nestedMetadata);
+
     expect(filter.censor("-214748\u200B3648")).toBe(
       `-${mask("214748\u200B3648")}`,
     );

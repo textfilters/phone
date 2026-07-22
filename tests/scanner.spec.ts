@@ -288,6 +288,26 @@ describe("@textfilters/phone scanner", () => {
       ]);
     }
 
+    const incompleteJsonMembers = [
+      'note, "serverTs":1784477618588',
+      '"serverTs":1784477618588',
+      '{"serverTs":1784477618588',
+    ];
+    for (const input of incompleteJsonMembers) {
+      const valueStart = input.indexOf("1784477618588");
+      expect(scanPhoneRanges(input)).toEqual([
+        [valueStart, valueStart + "1784477618588".length],
+      ]);
+    }
+    expect(scanPhoneRanges('note {"serverTs":1784477618588} after')).toEqual(
+      [],
+    );
+    expect(
+      scanPhoneRanges(
+        'note {"nested":{"note":"{","serverTs":1784477618588}} after',
+      ),
+    ).toEqual([]);
+
     const obfuscatedSentinels = [
       ["-214748\u200B3648", "214748\u200B3648"],
       ["-２147483648", "２147483648"],

@@ -118,7 +118,9 @@ or rejected non-phone numeric runs.
   prefixes are verified against the original ASCII source span so ignored or
   normalized characters cannot broaden the exception. A later group preserves
   the prefix only when it independently satisfies phone-suffix recovery; the
-  signed 32-bit sentinel also requires its exact ASCII source spelling.
+  signed 32-bit sentinel also requires its exact ASCII source spelling. The
+  metadata member must parse inside a complete containing JSON object, including
+  when that object is embedded in surrounding text.
 
 Some prefixes are rejected only until the end of the structured part. This lets a
 valid phone after a neutral numeric prefix still be rescanned and censored.
