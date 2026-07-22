@@ -655,8 +655,56 @@ export const isLabeledBookIdentifier = (
   );
 };
 
-const JSON_NUMERIC_METADATA_KEY_RE =
-  /(?:^|[,{])\s*"(cursor|serverts)"\s*:\s*"?$/iu;
+type JsonNumericMetadataKey = "cursor" | "serverts";
+
+const skipJsonWhitespaceBackward = (meta: TextMeta, start: number): number => {
+  let cursor = start;
+  while (cursor >= 0 && WHITESPACE_RE.test(meta.raw[cursor])) {
+    cursor--;
+  }
+  return cursor;
+};
+
+const jsonNumericMetadataKeyBefore = (
+  meta: TextMeta,
+  start: number,
+): JsonNumericMetadataKey | null => {
+  let cursor = start - 1;
+
+  if (cursor >= 0 && meta.raw[cursor] === '"') {
+    cursor--;
+  }
+  cursor = skipJsonWhitespaceBackward(meta, cursor);
+  if (cursor < 0 || meta.raw[cursor] !== ":") {
+    return null;
+  }
+
+  cursor = skipJsonWhitespaceBackward(meta, cursor - 1);
+  if (cursor < 0 || meta.raw[cursor] !== '"') {
+    return null;
+  }
+
+  cursor--;
+  const keyCharacters: string[] = [];
+  while (cursor >= 0 && meta.raw[cursor] !== '"') {
+    keyCharacters.push(meta.raw[cursor]);
+    if (keyCharacters.length > "serverts".length) {
+      return null;
+    }
+    cursor--;
+  }
+  if (cursor < 0 || meta.raw[cursor] !== '"') {
+    return null;
+  }
+
+  cursor = skipJsonWhitespaceBackward(meta, cursor - 1);
+  if (cursor >= 0 && meta.raw[cursor] !== "{" && meta.raw[cursor] !== ",") {
+    return null;
+  }
+
+  const key = keyCharacters.reverse().join("").toLowerCase();
+  return key === "cursor" || key === "serverts" ? key : null;
+};
 
 export const getNonContactNumericMetadataEnd = (
   meta: TextMeta,
@@ -677,10 +725,7 @@ export const getNonContactNumericMetadataEnd = (
     return null;
   }
 
-  const prefix = meta.raw.slice(Math.max(0, start - 48), start).join("");
-  const metadataKey = prefix
-    .match(JSON_NUMERIC_METADATA_KEY_RE)?.[1]
-    ?.toLowerCase();
+  const metadataKey = jsonNumericMetadataKeyBefore(meta, start);
 
   if (metadataKey === "serverts") {
     return groupEnds[0] ?? null;

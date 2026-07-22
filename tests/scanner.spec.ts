@@ -209,6 +209,18 @@ describe("@textfilters/phone scanner", () => {
         serverTimestampPhoneStart + "79991234567".length,
       ],
     ]);
+
+    const longJsonWhitespace = " ".repeat(49);
+    const spacedServerTimestamp = `{"serverTs":${longJsonWhitespace}1784477618588}`;
+    const spacedCursor = `{"cursor":${longJsonWhitespace}"1784477618588-0"}`;
+    expect(scanPhoneRanges(spacedServerTimestamp)).toEqual([]);
+    expect(scanPhoneRanges(spacedCursor)).toEqual([]);
+
+    const spacedCursorWithPhone = `{"cursor":${longJsonWhitespace}"1784477618588-79991234567"}`;
+    const spacedCursorPhoneStart = spacedCursorWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(spacedCursorWithPhone)).toEqual([
+      [spacedCursorPhoneStart, spacedCursorPhoneStart + "79991234567".length],
+    ]);
     expect(scanPhoneRanges('{"phone":1784477618588}')).toHaveLength(1);
   });
 });

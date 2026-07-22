@@ -138,6 +138,17 @@ describe("textfilters phone package", () => {
       `{"serverTs":"1784477618588-${mask("79991234567")}"}`,
     );
 
+    const longJsonWhitespace = " ".repeat(49);
+    const spacedServerTimestamp = `{"serverTs":${longJsonWhitespace}1784477618588}`;
+    const spacedCursor = `{"cursor":${longJsonWhitespace}"1784477618588-0"}`;
+    const spacedCursorWithPhone = `{"cursor":${longJsonWhitespace}"1784477618588-79991234567"}`;
+
+    expect(filter.censor(spacedServerTimestamp)).toBe(spacedServerTimestamp);
+    expect(filter.censor(spacedCursor)).toBe(spacedCursor);
+    expect(filter.censor(spacedCursorWithPhone)).toBe(
+      `{"cursor":${longJsonWhitespace}"1784477618588-${mask("79991234567")}"}`,
+    );
+
     expect(filter.censor("-79991234567")).toBe(`-${mask("79991234567")}`);
     expect(filter.censor('{"phone":1784477618588}')).toBe(
       `{"phone":${mask("1784477618588")}}`,

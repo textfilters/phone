@@ -112,7 +112,8 @@ or rejected non-phone numeric runs.
 - decimal, price-like, amount-like, and version-like prefixes.
 - the signed 32-bit minimum sentinel, exact 13-digit JSON `serverTs` values,
   and 13-digit JSON `cursor` values with an optional `-0` suffix; later groups
-  remain eligible for phone suffix recovery.
+  remain eligible for phone suffix recovery, and JSON whitespace is parsed
+  structurally without a fixed look-back window.
 
 Some prefixes are rejected only until the end of the structured part. This lets a
 valid phone after a neutral numeric prefix still be rescanned and censored.

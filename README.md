@@ -69,7 +69,8 @@ False-positive guards keep date-like, time-like, coordinate-like,
 IP/server-like, balance-like, and narrowly reviewed machine-metadata numeric
 text outside the masked range. JSON metadata coverage is limited to exact
 13-digit `serverTs` values and 13-digit `cursor` values with an optional `-0`
-suffix; any following phone-like group remains eligible for masking.
+suffix. JSON whitespace before the value is handled without a fixed look-back
+limit, and any following phone-like group remains eligible for masking.
 
 `censor()` preserves the original JavaScript string length and is idempotent.
 
