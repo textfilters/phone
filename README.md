@@ -76,7 +76,10 @@ without ignored or normalized characters; a following group only preserves the
 prefix when that suffix is independently recoverable as a phone. The signed
 32-bit minimum sentinel follows the same exact-source rule. JSON metadata
 exceptions require a complete, valid containing object; standalone key/value
-fragments are not exempt.
+fragments are not exempt. Enclosing-object validation is cached per scan so
+a single structural index covers repeated, nested, incomplete, and malformed
+metadata regions without candidate-by-candidate rescanning. Complete valid
+objects inside malformed surrounding text remain independently eligible.
 
 `censor()` preserves the original JavaScript string length and is idempotent.
 

@@ -211,6 +211,21 @@ describe("textfilters phone package", () => {
     const nestedMetadata =
       'note {"nested":{"note":"{","serverTs":1784477618588}} after';
     expect(filter.censor(nestedMetadata)).toBe(nestedMetadata);
+    const metadataAfterUnmatchedBrace =
+      'note { stray {"serverTs":1784477618588}';
+    expect(filter.censor(metadataAfterUnmatchedBrace)).toBe(
+      metadataAfterUnmatchedBrace,
+    );
+    const metadataInsideMalformedObject =
+      'note { stray {"serverTs":1784477618588}} after';
+    expect(filter.censor(metadataInsideMalformedObject)).toBe(
+      metadataInsideMalformedObject,
+    );
+    const metadataAfterMalformedString =
+      'note {"broken":"oops {"serverTs":1784477618588}';
+    expect(filter.censor(metadataAfterMalformedString)).toBe(
+      metadataAfterMalformedString,
+    );
 
     expect(filter.censor("-214748\u200B3648")).toBe(
       `-${mask("214748\u200B3648")}`,

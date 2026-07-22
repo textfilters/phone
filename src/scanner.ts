@@ -218,11 +218,13 @@ const parsePhoneCandidate = (
   const nonContactNumericMetadataEnd = getNonContactNumericMetadataEnd(
     meta,
     candidateStart,
-    candidateEnd,
-    groups,
-    groupSeparators,
-    groupStarts,
-    groupEnds,
+    {
+      end: candidateEnd,
+      groupEnds,
+      groups,
+      groupStarts,
+      separators: groupSeparators,
+    },
   );
   if (nonContactNumericMetadataEnd !== null) {
     return { rejectedUntil: nonContactNumericMetadataEnd };
