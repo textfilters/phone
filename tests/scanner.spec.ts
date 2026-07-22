@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   checkPhoneRanges,
@@ -178,5 +178,265 @@ describe("@textfilters/phone scanner", () => {
   it("keeps false-positive guards behind the prefilter", () => {
     expect(scanPhoneRanges("server 10.100.100.100")).toEqual([]);
     expect(scanPhoneRanges("balance 1,234,567,890")).toEqual([]);
+    expect(scanPhoneRanges("-2147483648")).toEqual([]);
+    expect(
+      scanPhoneRanges(
+        '{ "cursor": "1784477618588-0", "serverTs": 1784477618588 }',
+      ),
+    ).toEqual([]);
+    const cursorWithPhone = '{"cursor":"1784477618588-79991234567"}';
+    const cursorPhoneStart = cursorWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(cursorWithPhone)).toEqual([
+      [cursorPhoneStart, cursorPhoneStart + "79991234567".length],
+    ]);
+
+    const cursorSequenceWithPhone = '{"cursor":"1784477618588-0-79991234567"}';
+    const cursorSequencePhoneStart =
+      cursorSequenceWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(cursorSequenceWithPhone)).toEqual([
+      [
+        cursorSequencePhoneStart,
+        cursorSequencePhoneStart + "79991234567".length,
+      ],
+    ]);
+
+    const serverTimestampWithPhone = '{"serverTs":"1784477618588-79991234567"}';
+    const serverTimestampPhoneStart =
+      serverTimestampWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(serverTimestampWithPhone)).toEqual([
+      [
+        serverTimestampPhoneStart,
+        serverTimestampPhoneStart + "79991234567".length,
+      ],
+    ]);
+
+    const longJsonWhitespace = " ".repeat(49);
+    const spacedServerTimestamp = `{"serverTs":${longJsonWhitespace}1784477618588}`;
+    const spacedCursor = `{"cursor":${longJsonWhitespace}"1784477618588-0"}`;
+    expect(scanPhoneRanges(spacedServerTimestamp)).toEqual([]);
+    expect(scanPhoneRanges(spacedCursor)).toEqual([]);
+
+    const spacedCursorWithPhone = `{"cursor":${longJsonWhitespace}"1784477618588-79991234567"}`;
+    const spacedCursorPhoneStart = spacedCursorWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(spacedCursorWithPhone)).toEqual([
+      [spacedCursorPhoneStart, spacedCursorPhoneStart + "79991234567".length],
+    ]);
+
+    const escapedServerTimestamp = '{"server\\u0054s":1784477618588}';
+    const escapedCursor = '{"cur\\u0073or":"1784477618588-0"}';
+    expect(scanPhoneRanges(escapedServerTimestamp)).toEqual([]);
+    expect(scanPhoneRanges(escapedCursor)).toEqual([]);
+
+    const escapedServerTimestampWithPhone =
+      '{"server\\u0054s":"1784477618588-79991234567"}';
+    const escapedServerPhoneStart =
+      escapedServerTimestampWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(escapedServerTimestampWithPhone)).toEqual([
+      [escapedServerPhoneStart, escapedServerPhoneStart + "79991234567".length],
+    ]);
+
+    expect(scanPhoneRanges('{"CURSOR":1784477618588}')).toHaveLength(1);
+    expect(scanPhoneRanges('{"serverts":1784477618588}')).toHaveLength(1);
+    expect(scanPhoneRanges('{"phone":1784477618588}')).toHaveLength(1);
+
+    const obfuscatedMetadataValues = [
+      [
+        '{"serverTs":"178447\u200B7618588"}',
+        "178447\u200B7618588",
+        "178447\u200B7618588",
+      ],
+      [
+        '{"cursor":"1784477618588-\u200B0"}',
+        "1784477618588-\u200B0",
+        "1784477618588",
+      ],
+      [
+        '{"cursor":"1784477618588\u200B"}',
+        "1784477618588\u200B",
+        "1784477618588\u200B",
+      ],
+      ['{"serverTs":"178447７618588"}', "178447７618588", "178447７618588"],
+    ] as const;
+
+    for (const [input, value, matchedValue] of obfuscatedMetadataValues) {
+      const valueStart = Array.from(
+        input.slice(0, input.indexOf(value)),
+      ).length;
+      expect(scanPhoneRanges(input)).toEqual([
+        [valueStart, valueStart + Array.from(matchedValue).length],
+      ]);
+    }
+
+    const zeroWidthServerTimestampWithPhone =
+      '{"serverTs":"1784477618588\u200B-79991234567"}';
+    const metadataStart =
+      zeroWidthServerTimestampWithPhone.indexOf("1784477618588");
+    const phoneStart = zeroWidthServerTimestampWithPhone.indexOf("79991234567");
+    expect(scanPhoneRanges(zeroWidthServerTimestampWithPhone)).toEqual([
+      [metadataStart, metadataStart + "1784477618588".length],
+      [phoneStart, phoneStart + "79991234567".length],
+    ]);
+
+    const unsupportedMetadataSuffixes = [
+      '{"serverTs":"1784477618588-0"}',
+      '{"cursor":"1784477618588-1"}',
+    ];
+    for (const input of unsupportedMetadataSuffixes) {
+      const valueStart = input.indexOf("1784477618588");
+      expect(scanPhoneRanges(input)).toEqual([
+        [valueStart, valueStart + "1784477618588".length],
+      ]);
+    }
+
+    const incompleteJsonMembers = [
+      'note, "serverTs":1784477618588',
+      '"serverTs":1784477618588',
+      '{"serverTs":1784477618588',
+    ];
+    for (const input of incompleteJsonMembers) {
+      const valueStart = input.indexOf("1784477618588");
+      expect(scanPhoneRanges(input)).toEqual([
+        [valueStart, valueStart + "1784477618588".length],
+      ]);
+    }
+    const malformedJsonMembers = [
+      '{"serverTs":1784477618588,}',
+      '{"x":1 "serverTs":1784477618588}',
+      '{"x":"\\q","serverTs":1784477618588}',
+      '{"bad":[,],"serverTs":1784477618588}',
+    ];
+    for (const input of malformedJsonMembers) {
+      const valueStart = input.indexOf("1784477618588");
+      expect(scanPhoneRanges(input)).toEqual([
+        [valueStart, valueStart + "1784477618588".length],
+      ]);
+    }
+    const invalidOuterWithValidChild =
+      '{"x":,"serverTs":1784477618588,"child":{"serverTs":1784477618588}}';
+    const invalidOuterValueStart =
+      invalidOuterWithValidChild.indexOf("1784477618588");
+    expect(scanPhoneRanges(invalidOuterWithValidChild)).toEqual([
+      [invalidOuterValueStart, invalidOuterValueStart + "1784477618588".length],
+    ]);
+    const hiddenValidChildAfterInvalidOuterMember =
+      '{"x":,"serverTs":1784477618588,"broken":"oops {"a":1,"serverTs":1784477618588}';
+    const hiddenOuterValueStart =
+      hiddenValidChildAfterInvalidOuterMember.indexOf("1784477618588");
+    expect(scanPhoneRanges(hiddenValidChildAfterInvalidOuterMember)).toEqual([
+      [hiddenOuterValueStart, hiddenOuterValueStart + "1784477618588".length],
+    ]);
+    expect(scanPhoneRanges('note {"serverTs":1784477618588} after')).toEqual(
+      [],
+    );
+    expect(
+      scanPhoneRanges(
+        'note {"nested":{"note":"{","serverTs":1784477618588}} after',
+      ),
+    ).toEqual([]);
+
+    const obfuscatedSentinels = [
+      ["-214748\u200B3648", "214748\u200B3648"],
+      ["-２147483648", "２147483648"],
+      ["-\u200B2147483648", "2147483648"],
+    ] as const;
+    for (const [input, value] of obfuscatedSentinels) {
+      const valueStart = Array.from(
+        input.slice(0, input.indexOf(value)),
+      ).length;
+      expect(scanPhoneRanges(input)).toEqual([
+        [valueStart, valueStart + Array.from(value).length],
+      ]);
+    }
+  });
+
+  it("validates flat and nested metadata members once per outer object", () => {
+    const repeatedMetadata = `{${Array.from(
+      { length: 64 },
+      (_, index) => `"serverTs":${1784477618588 + index}`,
+    ).join(",")}}`;
+    const nestedMetadata = Array.from(
+      { length: 64 },
+      (_, index) => index,
+    ).reduce(
+      (nested, index) =>
+        `{"nested":${nested},"serverTs":${1784477618588 + index}}`,
+      '{"serverTs":1784477618588}',
+    );
+    const mixedMetadata =
+      '{"values":[true,false,null,-12.5e+3,{"serverTs":1784477618588}],"escaped":"line\\n\\u1234"}';
+    const parseSpy = vi.spyOn(JSON, "parse");
+
+    try {
+      expect(scanPhoneRanges(repeatedMetadata)).toEqual([]);
+      expect(scanPhoneRanges(nestedMetadata)).toEqual([]);
+      expect(scanPhoneRanges(mixedMetadata)).toEqual([]);
+      expect(
+        parseSpy.mock.calls
+          .map(([value]) => value)
+          .filter(
+            (value): value is string =>
+              typeof value === "string" && value.startsWith("{"),
+          ),
+      ).toEqual([repeatedMetadata, nestedMetadata, mixedMetadata]);
+    } finally {
+      parseSpy.mockRestore();
+    }
+  });
+
+  it("indexes malformed metadata regions without candidate reparsing", () => {
+    const incompleteObject = `{${Array.from(
+      { length: 64 },
+      (_, index) => `"serverTs":${1784477618588 + index}`,
+    ).join(",")}`;
+    const validMetadata = '{"serverTs":1784477618588}';
+    const repeatedRecoveredMetadata = `{${Array.from(
+      { length: 32 },
+      (_, index) => `"serverTs":${1784477618588 + index}`,
+    ).join(",")}}`;
+    const incompleteRecoveredMetadata = repeatedRecoveredMetadata.slice(0, -1);
+    const grammarInvalidRecoveredMetadata = `{${Array.from(
+      { length: 32 },
+      (_, index) => `"x":,"serverTs":${1784477618588 + index}`,
+    ).join(",")}}`;
+    const invalidMetadataAfterBraceString = `{"note":"{",${Array.from(
+      { length: 32 },
+      (_, index) => `"x":,"serverTs":${1784477618588 + index}`,
+    ).join(",")}}`;
+    const malformedInputs = [
+      "{".repeat(2048) + validMetadata,
+      `note { stray ${validMetadata}`,
+      `note { stray ${validMetadata}} after`,
+      `note {"broken":"oops ${validMetadata}`,
+      `note {"broken":"oops ${repeatedRecoveredMetadata}`,
+    ];
+    const parseSpy = vi.spyOn(JSON, "parse");
+
+    try {
+      expect(scanPhoneRanges(incompleteObject)).toHaveLength(64);
+      for (const input of malformedInputs) {
+        expect(scanPhoneRanges(input)).toEqual([]);
+      }
+      expect(
+        scanPhoneRanges(`note {"broken":"oops ${incompleteRecoveredMetadata}`),
+      ).toHaveLength(32);
+      expect(scanPhoneRanges(grammarInvalidRecoveredMetadata)).toHaveLength(32);
+      expect(scanPhoneRanges(invalidMetadataAfterBraceString)).toHaveLength(32);
+      expect(
+        parseSpy.mock.calls
+          .map(([value]) => value)
+          .filter(
+            (value): value is string =>
+              typeof value === "string" && value.startsWith("{"),
+          ),
+      ).toEqual([
+        validMetadata,
+        validMetadata,
+        validMetadata,
+        validMetadata,
+        repeatedRecoveredMetadata,
+      ]);
+    } finally {
+      parseSpy.mockRestore();
+    }
   });
 });

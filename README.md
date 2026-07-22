@@ -65,7 +65,21 @@ The default shared instance is exported as `filter`. It has stable `name: "phone
 
 The package detects phone-like numeric sequences across common RU and international formats, including Unicode digit forms that normalize to ASCII digits for matching.
 
-False-positive guards keep date-like, time-like, coordinate-like, IP/server-like, and balance-like numeric text outside the masked range.
+False-positive guards keep date-like, time-like, coordinate-like,
+IP/server-like, balance-like, and narrowly reviewed machine-metadata numeric
+text outside the masked range. JSON metadata coverage is limited to exact
+13-digit `serverTs` values and 13-digit `cursor` values with an optional `-0`
+suffix. JSON whitespace before the value is handled without a fixed look-back
+limit. Metadata keys remain case-sensitive and support standard JSON string
+escapes. Exempt value prefixes must contain the exact ASCII source characters,
+without ignored or normalized characters; a following group only preserves the
+prefix when that suffix is independently recoverable as a phone. The signed
+32-bit minimum sentinel follows the same exact-source rule. JSON metadata
+exceptions require a complete, valid containing object; standalone key/value
+fragments are not exempt. Enclosing-object validation is cached per scan so
+a single structural index covers repeated, nested, incomplete, and malformed
+metadata regions without candidate-by-candidate rescanning. Complete valid
+objects inside malformed surrounding text remain independently eligible.
 
 `censor()` preserves the original JavaScript string length and is idempotent.
 

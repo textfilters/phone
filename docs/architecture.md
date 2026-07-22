@@ -110,6 +110,21 @@ or rejected non-phone numeric runs.
 - IPv4, IPv4 ports, CIDR-like prefixes, and IPv6 tail fields;
 - balance or thousand-separated values;
 - decimal, price-like, amount-like, and version-like prefixes.
+- the signed 32-bit minimum sentinel, exact 13-digit JSON `serverTs` values,
+  and 13-digit JSON `cursor` values with an optional `-0` suffix; later groups
+  remain eligible for phone suffix recovery, and JSON whitespace is parsed
+  structurally without a fixed look-back window. Key matching uses original
+  case-sensitive JSON strings and decodes standard key escapes. Exempt value
+  prefixes are verified against the original ASCII source span so ignored or
+  normalized characters cannot broaden the exception. A later group preserves
+  the prefix only when it independently satisfies phone-suffix recovery; the
+  signed 32-bit sentinel also requires its exact ASCII source spelling. The
+  metadata member must parse inside a complete containing JSON object, including
+  when that object is embedded in surrounding text. Direct member positions and
+  validation results are indexed once on the scan metadata identity. A single
+  syntax pass selects non-overlapping complete object roots for authoritative
+  parsing. Valid inner objects remain eligible inside malformed surrounding
+  regions, while incomplete or invalid members are negatively indexed.
 
 Some prefixes are rejected only until the end of the structured part. This lets a
 valid phone after a neutral numeric prefix still be rescanned and censored.

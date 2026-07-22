@@ -14,6 +14,7 @@ import {
   getLeadingTimeEnd,
   getLeadingVersionPhoneSuffixStart,
   getMinuteAfterTimeEnd,
+  getNonContactNumericMetadataEnd,
   getSecondAfterTimeEnd,
   getSignedLongitudeEnd,
   getStructuredFalsePositive,
@@ -213,6 +214,20 @@ const parsePhoneCandidate = (
     COMBINING_MARK_RE.test(meta.raw[candidateEnd])
   ) {
     candidateEnd++;
+  }
+  const nonContactNumericMetadataEnd = getNonContactNumericMetadataEnd(
+    meta,
+    candidateStart,
+    {
+      end: candidateEnd,
+      groupEnds,
+      groups,
+      groupStarts,
+      separators: groupSeparators,
+    },
+  );
+  if (nonContactNumericMetadataEnd !== null) {
+    return { rejectedUntil: nonContactNumericMetadataEnd };
   }
   const hasClosingParenthesisBefore = (limit: number): boolean =>
     parenthesisPositions.some(
